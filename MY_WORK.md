@@ -248,16 +248,19 @@
 > 💡 **TIP:** Talk about race conditions (read-modify-write), critical sections, mutual exclusion with `ReentrantLock` and `try/finally`, the role of a counting semaphore, and what surprised you when the starter failed.
 
 **Your Answer:** *(5-7 sentences)*
+I learned that synchronization helps threads work safely when they use shared data. Before this assignment .I did not know how threads could affect each other when they run together. I understood that a race condition can happen when threads access the same data at the same time. In my code I used ReentrantLock to protect the ready queue and shared statistics I also learned why we use try-finally to release the lock. The Semaphore helped me understand how CPU threads can wait for a process instead of repeatedly checking the queue.
 
-[Write your answer here.]
+
+
 
 ## Question 2: What was the most challenging part of this assignment?
 
 > 💡 **TIP:** Pick **one** specific challenge (understanding why the starter failed, choosing the lock granularity, the initial value of the semaphore, the shutdown of the CPUs, Git, the video) and say *why* it was hard.
 
 **Your Answer:** *(5-7 sentences)*
+The most challenging part for me was understanding where I needed to add the locks. At first, I was not sure which parts of the code needed protection. I had to carefully check the add, poll, processOf, and snapshot methods. I also needed to make sure the lock was released after each method finished. Another part that needed attention was protecting the shared statistics. I learned that even a small mistake in the lock placement could cause a problem.
 
-[Write your answer here.]
+
 
 ## Question 3: How did you overcome the challenges you faced?
 
@@ -265,15 +268,16 @@
 
 **Your Answer:** *(5-7 sentences)*
 
-[Write your answer here.]
+I started by reading the code and understanding what each method does. Then I added the locks step by step instead of changing everything at once. I checked the opening and closing brackets after each change. For the shared statistics, I used one statsLock to protect the three counters. I also checked how the Semaphore was used to control CPU waiting. Working on each feature separately made the code easier for me to understand.
+
 
 ## Question 4: Where can synchronization concepts be applied in real-world applications?
 
 > 💡 **TIP:** Use real applications you know (banking and money transfers, ticket or seat booking, a shared counter on a website, a print queue, a database) and connect each one to what you built here (shared data, critical section, lock or semaphore).
 
 **Your Answer:** *(5-7 sentences)*
+Synchronization is useful in applications where many users access the same information. For example, an online shopping website needs to update the number of available products correctly. If two customers buy the last item at the same time, the system must prevent incorrect updates. A lock can help protect the shared product quantity. Synchronization is also useful in a printer queue because many people may send documents at the same time. This reminds me of the ready queue in my assignment where I used a lock to protect shared data.
 
-[Write your answer here.]
 
 ### Optional: What would you like to learn more about?
 
