@@ -385,13 +385,13 @@ A deadlock may occur when a producer takes the mutex before waiting for space in
 ## Summary
 
 **Key concepts I understood through these questions:**
-1.
-2.
-3.
+1. I learned how race conditions happen when two CPUs access shared data at the same time
+2. I understood how ReentrantLock protects the ready queue and shared statistics
+3. I learned how a semaphore reduces busy waiting and helps CPUs work correctly
 
 **Concepts I need to study more:**
-1.
-2.
+1. I need more practice understanding deadlocks and how to prevent them
+2. I want to understand fair and unfair locks better
 
 ---
 
