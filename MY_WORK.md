@@ -310,21 +310,36 @@ Synchronization is useful in applications where many users access the same infor
 > 💡 **TIP:** Use a small timeline: *CPU-1 reads `contextSwitchCount` = 12 → CPU-2 reads 12 → CPU-1 writes 13 → CPU-2 writes 13 → one increment is lost.* If your starter run crashed before printing numbers, run it several times (or paste the exception and the watchdog message and explain it).
 
 **Your Answer:** *(3-5 sentences)*
-
-[Write your answer here.]
+When I tested the original starter code, CPU-1 and CPU-2 both picked P1, and CPU-1 showed an IllegalThreadStateException. The simulation did not finish, and the watchdog stopped it after 28 seconds. The verification showed 29 context switches instead of 32 and 13 completed processes instead of 14. This happened because the shared queue was not protected so that both CPUs could pick the same process. RaceWindow.pause() increases the chance of this problem, but the race condition can still happen without it because of thread timing.
 
 Verification block of the **original starter**:
 ```
-[Paste the verification block (or the exception/watchdog message) of the starter here]
+Exception in thread "CPU-1" java.lang.IllegalThreadStateException
+    at java.base/java.lang.Thread.start(Thread.java:1389)
+    at CpuWorker.run(SchedulerSimulationSync.java:283)
+
+? WATCHDOG: the simulation did not finish (28 s). A process was lost, or a CPU is blocked forever, or the 'completed' counter lost an update.
+
+??? VERIFICATION (expected values are computed from YOUR seed) ???
+Context switches (quanta executed)    expected 32      observed 29      ? MISMATCH
+Completed processes                   expected 14      observed 13      ? MISMATCH
+Total service time (ms)               expected 46053   observed 41891   ? MISMATCH
+Busy-waiting polls (must be 0)        expected 0       observed 977     ? MISMATCH
+? At least one check failed (see the ? lines above): a race condition or busy waiting is still present
 ```
 
 Verification block of **my final version**:
 ```
-[Paste the verification block of your final version here (all lines ✔)]
+??? VERIFICATION (expected values are computed from YOUR seed) ???
+Context switches (quanta executed)    expected 32      observed 32      ?
+Completed processes                   expected 14      observed 14      ?
+Total service time (ms)               expected 46053   observed 46053   ?
+Busy-waiting polls (must be 0)        expected 0       observed 0       ?
+? All shared values are consistent.
 ```
 
 **Explanation of the timeline:**
-[Explain the lost update step by step.]
+For example, CPU-1 reads contextSwitchCount as 5, and CPU-2 reads the same value before it changes. CPU-1 adds 1 and saves 6. CPU-2 also adds 1 using the old value and saves 6 instead of 7. This causes a lost update because both CPUs changed the same counter without a lock. A ReentrantLock prevents this by allowing only one CPU to update the counter at a time
 
 ## Question 2: Critical Sections and Lock Granularity
 
@@ -333,13 +348,13 @@ Verification block of **my final version**:
 > 💡 **TIP:** The three counters are independent: does updating `contextSwitchCount` need to block an update of `totalServiceTime`? Also think about what could go wrong (deadlock, or long waiting) if the queue lock and the statistics lock were the **same** lock and a thread held it while doing something slow.
 
 **Your Answer:** *(3-5 sentences)*
-
-[Write your answer here.]
+In my code,I used queueLock to protect add(), poll(), processOf(), and snapshot() because both CPUs use the same ready queue. For the statistics, I chose one statsLock for contextSwitchCount,completedProcessCount, and totalServiceTime to keep the updates and reads safe, although separate locks could reduce unnecessary waiting. I kept the queue lock separate from the statistics lock so each part can work without waiting for the other.These locks provide mutual exclusion, and threads can make progress when the needed lock is released.Since I used the default ReentrantLock, it does not guarantee fairness or bounded waiting so that a thread could wait longer than others
 
 | Critical section (variable / method) | Lock used | Why it needs protection |
 |---|---|---|
-| [e.g., `ReadyQueue.poll()`] | [lock name] | [reason] |
-| [...] | [...] | [...] |
+| ReadyQueue: add(), poll(), processOf(), snapshot() |  queueLock | To keep the shared queue safe when both CPUs access it
+ |
+| SharedStats: contextSwitchCount, completedProcessCount, totalServiceTime (updates and reads) | statsLock  | To protect the counters and avoid incorrect results |
 
 ## Question 3: Busy Waiting vs Semaphore
 
@@ -349,7 +364,7 @@ Verification block of **my final version**:
 
 **Your Answer:** *(3-5 sentences)*
 
-[Write your answer here.]
+In the original starter, the CPUs repeatedly checked the ready queue when it was empty, wasting CPU time; my output showed 977 busy-waiting polls. I used a counting Semaphore to track how many processes were ready, so the CPUs could wait with acquire() instead of continuously checking the queue. Its initial value is 0 because the queue starts empty, and after adding the first 14 processes, it reaches 14 if no CPU has taken a permit yet. Each time a process is added, release() adds a permit, while acquire() takes one when a CPU is ready to get a process. At the end, release(totalCPUs) wakes any CPUs blocked in acquire() so they can stop, but without it, some CPU threads could remain blocked and prevent the simulation from ending.
 
 ## Question 4: Classical Problems and Deadlock
 
@@ -360,13 +375,13 @@ Verification block of **my final version**:
 **Your Answer:** *(3-5 sentences)*
 
 **Classical problem and roles**:
-[Name the problem; who is the producer, who is the consumer?]
+My scheduler is an example of the Producer-Consumer problem. The main thread produces processes by adding them to the queue, while the CPUs consume processes and also act as producers when they put unfinished processes back into the queue.
 
 **Semaphores for a bounded queue (name and initial value)**:
-[Name the three semaphores and their initial values.]
+If the ready queue has a capacity of K, the three semaphores would be: empty = K (available spaces), full = 0 (ready processes), and mutex = 1 (protecting the queue).
 
 **Deadlock scenario and prevention**:
-[Describe the scenario and the necessary condition you would break.]
+A deadlock may occur when a producer takes the mutex before waiting for space in a full queue, preventing the consumer from getting the mutex to remove a process. To avoid this, I would break the hold-and-wait condition by waiting for an empty slot before locking the queue.
 
 ## Summary
 
