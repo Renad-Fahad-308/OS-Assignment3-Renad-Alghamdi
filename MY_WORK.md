@@ -352,8 +352,7 @@ In my code,I used queueLock to protect add(), poll(), processOf(), and snapshot(
 
 | Critical section (variable / method) | Lock used | Why it needs protection |
 |---|---|---|
-| ReadyQueue: add(), poll(), processOf(), snapshot() |  queueLock | To keep the shared queue safe when both CPUs access it
- |
+| ReadyQueue: add(), poll(), processOf(), snapshot() |  queueLock | To keep the shared queue safe when both CPUs access it|
 | SharedStats: contextSwitchCount, completedProcessCount, totalServiceTime (updates and reads) | statsLock  | To protect the counters and avoid incorrect results |
 
 ## Question 3: Busy Waiting vs Semaphore
